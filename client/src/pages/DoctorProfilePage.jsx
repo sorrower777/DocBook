@@ -43,12 +43,7 @@ const DoctorProfilePage = () => {
     }, 5000);
   };
 
-  const formatAvailability = (availability) => {
-    return availability
-      .filter(day => day.isAvailable)
-      .map(day => `${day.day}: ${day.startTime} - ${day.endTime}`)
-      .join(', ');
-  };
+
 
   const handleStartCall = (callType) => {
     if (!isAuthenticated) {
@@ -140,7 +135,7 @@ const DoctorProfilePage = () => {
                       {doctor.specialty}
                     </span>
                     <span className="text-gray-600">
-                      {doctor.experienceInYears} years experience
+                      {doctor.experience} years experience
                     </span>
                   </div>
 
@@ -192,16 +187,18 @@ const DoctorProfilePage = () => {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Qualifications</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  {doctor.qualifications}
+                  {Array.isArray(doctor.qualifications)
+                    ? doctor.qualifications.join(', ')
+                    : doctor.qualifications}
                 </p>
               </div>
 
               {/* About */}
-              {doctor.about && (
+              {doctor.bio && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">About</h3>
                   <p className="text-gray-700 leading-relaxed">
-                    {doctor.about}
+                    {doctor.bio}
                   </p>
                 </div>
               )}
@@ -210,27 +207,25 @@ const DoctorProfilePage = () => {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Availability</h3>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {doctor.availability.map((day) => (
-                    <div 
-                      key={day.day}
-                      className={`p-3 rounded-lg border ${
-                        day.isAvailable 
-                          ? 'bg-green-50 border-green-200' 
-                          : 'bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-900">{day.day}</span>
-                        {day.isAvailable ? (
+                  {doctor.availableDays && doctor.availableDays.length > 0 ? (
+                    doctor.availableDays.map((day) => (
+                      <div
+                        key={day}
+                        className="p-3 rounded-lg border bg-green-50 border-green-200"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-gray-900">{day}</span>
                           <span className="text-green-600 text-sm">
-                            {day.startTime} - {day.endTime}
+                            {doctor.availableTime?.start || '09:00'} - {doctor.availableTime?.end || '17:00'}
                           </span>
-                        ) : (
-                          <span className="text-gray-500 text-sm">Unavailable</span>
-                        )}
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 p-3 rounded-lg border bg-gray-50 border-gray-200">
+                      <span className="text-gray-500">Availability information not provided</span>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
 

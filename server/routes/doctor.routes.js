@@ -28,13 +28,12 @@ router.get('/', async (req, res) => {
     const doctors = await DoctorProfile.find(query)
       .populate({
         path: 'user',
-        match: userQuery,
-        select: 'name email isVerified'
+        // match: userQuery,
+        // select: 'name email isVerified'
       })
       .skip(skip)
       .limit(parseInt(limit))
       .sort({ createdAt: -1 });
-
     // Filter out doctors where user is null (not verified)
     const verifiedDoctors = doctors.filter(doctor => doctor.user !== null);
 
@@ -106,7 +105,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doctor = await DoctorProfile.findOne({ user: id })
+    const doctor = await DoctorProfile.findById(id)
       .populate({
         path: 'user',
         select: 'name email isVerified'
@@ -119,12 +118,12 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    if (!doctor.user.isVerified) {
-      return res.status(404).json({
-        success: false,
-        message: 'Doctor not available'
-      });
-    }
+    // if (!doctor.user.isVerified) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: 'Doctor not available'
+    //   });
+    // }
 
     res.json({
       success: true,
@@ -177,7 +176,7 @@ router.get('/profile/me', authenticateToken, requireRole('doctor'), async (req, 
 // @access  Private (Doctor only)
 router.put('/profile', authenticateToken, requireRole('doctor'), async (req, res) => {
   try {
-    const { specialty, qualifications, experienceInYears, consultationFee, about, profileImage } = req.body;
+    const { specialty, qualifications, experience, consultationFee, bio, profileImage } = req.body;
 
     const doctorProfile = await DoctorProfile.findOne({ user: req.user._id });
 
@@ -191,9 +190,9 @@ router.put('/profile', authenticateToken, requireRole('doctor'), async (req, res
     // Update fields if provided
     if (specialty) doctorProfile.specialty = specialty;
     if (qualifications) doctorProfile.qualifications = qualifications;
-    if (experienceInYears !== undefined) doctorProfile.experienceInYears = experienceInYears;
+    if (experience !== undefined) doctorProfile.experience = experience;
     if (consultationFee !== undefined) doctorProfile.consultationFee = consultationFee;
-    if (about !== undefined) doctorProfile.about = about;
+    if (bio !== undefined) doctorProfile.bio = bio;
     if (profileImage !== undefined) doctorProfile.profileImage = profileImage;
 
     await doctorProfile.save();
@@ -228,12 +227,12 @@ router.put('/profile', authenticateToken, requireRole('doctor'), async (req, res
 // @access  Private (Doctor only)
 router.put('/availability', authenticateToken, requireRole('doctor'), requireVerifiedDoctor, async (req, res) => {
   try {
-    const { availability } = req.body;
+    const { availableDays, availableTime } = req.body;
 
-    if (!availability || !Array.isArray(availability)) {
+    if (!availableDays || !Array.isArray(availableDays)) {
       return res.status(400).json({
         success: false,
-        message: 'Availability must be an array'
+        message: 'Available days must be an array'
       });
     }
 
@@ -246,13 +245,19 @@ router.put('/availability', authenticateToken, requireRole('doctor'), requireVer
       });
     }
 
-    doctorProfile.availability = availability;
+    doctorProfile.availableDays = availableDays;
+    if (availableTime) {
+      doctorProfile.availableTime = availableTime;
+    }
     await doctorProfile.save();
 
     res.json({
       success: true,
       message: 'Availability updated successfully',
-      data: { availability: doctorProfile.availability }
+      data: {
+        availableDays: doctorProfile.availableDays,
+        availableTime: doctorProfile.availableTime
+      }
     });
 
   } catch (error) {

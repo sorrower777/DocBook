@@ -51,25 +51,31 @@ router.get('/available-slots/:doctorId', async (req, res) => {
       });
     }
 
-    // Find availability for the requested day
-    const dayAvailability = doctorProfile.availability.find(avail => avail.day === dayName);
-    
-    if (!dayAvailability || !dayAvailability.isAvailable) {
+    // Check if doctor is available on the requested day
+    if (!doctorProfile.availableDays || !doctorProfile.availableDays.includes(dayName)) {
       return res.json({
         success: true,
         data: { availableSlots: [] }
       });
     }
 
-    // Generate all possible time slots
-    const allSlots = generateTimeSlots(dayAvailability.startTime, dayAvailability.endTime);
+    // Generate all possible time slots using doctor's available time
+    const startTime = doctorProfile.availableTime?.start || '09:00';
+    const endTime = doctorProfile.availableTime?.end || '17:00';
+    const allSlots = generateTimeSlots(startTime, endTime);
 
     // Get existing appointments for this doctor on this date
+    const startOfDay = new Date(appointmentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(appointmentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const existingAppointments = await Appointment.find({
       doctor: doctorId,
       date: {
-        $gte: new Date(appointmentDate.setHours(0, 0, 0, 0)),
-        $lt: new Date(appointmentDate.setHours(23, 59, 59, 999))
+        $gte: startOfDay,
+        $lt: endOfDay
       },
       status: { $in: ['pending', 'confirmed'] }
     }).select('timeSlot');
@@ -118,7 +124,10 @@ router.post('/book', authenticateToken, requireRole('patient'), async (req, res)
     const appointmentDate = new Date(date);
     
     // Check if date is in the future
-    if (appointmentDate < new Date().setHours(0, 0, 0, 0)) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (appointmentDate < today) {
       return res.status(400).json({
         success: false,
         message: 'Cannot book appointments for past dates'
@@ -126,11 +135,17 @@ router.post('/book', authenticateToken, requireRole('patient'), async (req, res)
     }
 
     // Check if time slot is available
+    const startOfDay = new Date(appointmentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(appointmentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const existingAppointment = await Appointment.findOne({
       doctor: doctorId,
       date: {
-        $gte: new Date(appointmentDate.setHours(0, 0, 0, 0)),
-        $lt: new Date(appointmentDate.setHours(23, 59, 59, 999))
+        $gte: startOfDay,
+        $lt: endOfDay
       },
       timeSlot,
       status: { $in: ['pending', 'confirmed'] }

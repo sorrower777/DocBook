@@ -548,20 +548,16 @@ async function seedDoctors() {
         const doctorProfile = new DoctorProfile({
           user: user._id,
           specialty: doctorData.specialty,
-          qualifications: doctorData.qualifications,
-          experienceInYears: doctorData.experienceInYears,
+          qualifications: doctorData.qualifications.split(',').map(q => q.trim()),
+          experience: doctorData.experienceInYears,
+          bio: doctorData.about,
           consultationFee: doctorData.consultationFee,
-          about: doctorData.about,
-          // Default availability (Monday to Friday, 9 AM to 5 PM)
-          availability: [
-            { day: 'Monday', startTime: '09:00', endTime: '17:00', isAvailable: true },
-            { day: 'Tuesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
-            { day: 'Wednesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
-            { day: 'Thursday', startTime: '09:00', endTime: '17:00', isAvailable: true },
-            { day: 'Friday', startTime: '09:00', endTime: '17:00', isAvailable: true },
-            { day: 'Saturday', startTime: '09:00', endTime: '13:00', isAvailable: false },
-            { day: 'Sunday', startTime: '09:00', endTime: '13:00', isAvailable: false }
-          ]
+          isVerified: true,
+          // Default values for optional fields
+          clinicAddress: '',
+          phone: '',
+          availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+          availableTime: { start: '09:00', end: '17:00' }
         });
 
         await doctorProfile.save();

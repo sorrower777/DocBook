@@ -44,7 +44,8 @@ const DoctorDashboard = () => {
           : apt
       ));
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update appointment status');
+      console.log(error.response?.data?.message || 'Failed to update appointment status');
+      
     } finally {
       setUpdatingStatus(null);
     }
@@ -318,11 +319,15 @@ const DoctorDashboard = () => {
               </div>
               <div>
                 <h3 className="font-medium text-gray-900 mb-2">Experience</h3>
-                <p className="text-gray-600">{doctorProfile.experienceInYears} years</p>
+                <p className="text-gray-600">{doctorProfile.experience} years</p>
               </div>
               <div className="md:col-span-2">
                 <h3 className="font-medium text-gray-900 mb-2">Qualifications</h3>
-                <p className="text-gray-600">{doctorProfile.qualifications}</p>
+                <p className="text-gray-600">
+                  {Array.isArray(doctorProfile.qualifications)
+                    ? doctorProfile.qualifications.join(', ')
+                    : doctorProfile.qualifications}
+                </p>
               </div>
             </div>
           </div>

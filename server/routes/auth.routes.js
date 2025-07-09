@@ -58,13 +58,15 @@ router.post('/register', async (req, res) => {
 
     await user.save();
 
+    console.log(user._id, " ", role)
+
     // If user is a doctor, create doctor profile
     if (role === 'doctor') {
       const doctorProfile = new DoctorProfile({
         user: user._id,
         specialty,
-        qualifications,
-        experienceInYears: Number(experienceInYears),
+        qualifications: Array.isArray(qualifications) ? qualifications : [qualifications],
+        experience: Number(experienceInYears),
         consultationFee: Number(consultationFee)
       });
 

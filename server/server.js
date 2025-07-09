@@ -110,7 +110,7 @@ app.use((error, req, res, next) => {
 // Database connection
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/doctor-appointment-system';
+    const mongoURI = process.env.MONGO_URI;
     
     await mongoose.connect(mongoURI, {
       useNewUrlParser: true,

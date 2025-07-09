@@ -31,16 +31,18 @@ const DoctorCard = ({ doctor }) => {
           </p>
           
           <p className="text-gray-600 text-sm mt-1">
-            {doctor.experienceInYears} years experience
+            {doctor.experience} years experience
           </p>
-          
+
           <p className="text-gray-700 text-sm mt-2 line-clamp-2">
-            {doctor.qualifications}
+            {Array.isArray(doctor.qualifications)
+              ? doctor.qualifications.join(', ')
+              : doctor.qualifications}
           </p>
-          
-          {doctor.about && (
+
+          {doctor.bio && (
             <p className="text-gray-600 text-sm mt-2 line-clamp-2">
-              {doctor.about}
+              {doctor.bio}
             </p>
           )}
         </div>
@@ -55,7 +57,7 @@ const DoctorCard = ({ doctor }) => {
           </div>
           
           <Link 
-            to={`/doctor/${doctor.user._id}`}
+            to={`/doctor/${doctor._id}`}
             className="btn-primary text-sm"
           >
             Book Now
