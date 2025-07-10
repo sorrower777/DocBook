@@ -274,7 +274,9 @@ router.patch('/:id/cancel', authenticateToken, requireRole('patient'), async (re
     }
 
     // Check if appointment belongs to the patient
-    if (appointment.patient.toString() !== req.user._id.toString()) {
+    // Handle both populated and non-populated patient field
+    const patientId = appointment.patient._id || appointment.patient;
+    if (patientId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'You can only cancel your own appointments'
@@ -282,10 +284,18 @@ router.patch('/:id/cancel', authenticateToken, requireRole('patient'), async (re
     }
 
     // Check if appointment can be cancelled
-    if (!appointment.canBeCancelled()) {
+    try {
+      if (!appointment.canBeCancelled()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Appointment cannot be cancelled (must be at least 2 hours before appointment time)'
+        });
+      }
+    } catch (methodError) {
+      console.error('Error checking if appointment can be cancelled:', methodError);
       return res.status(400).json({
         success: false,
-        message: 'Appointment cannot be cancelled (must be at least 2 hours before appointment time)'
+        message: 'Unable to process cancellation request'
       });
     }
 
@@ -336,7 +346,9 @@ router.patch('/:id/status', authenticateToken, requireRole('doctor'), requireVer
     }
 
     // Check if appointment belongs to the doctor
-    if (appointment.doctor.toString() !== req.user._id.toString()) {
+    // Handle both populated and non-populated doctor field
+    const doctorId = appointment.doctor._id || appointment.doctor;
+    if (doctorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'You can only update your own appointments'

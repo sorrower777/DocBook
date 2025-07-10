@@ -9,15 +9,22 @@ const LoginPage = () => {
   });
   const [loading, setLoading] = useState(false);
   
-  const { login, isAuthenticated, error, clearError } = useAuth();
+  const { login, isAuthenticated, user, error, clearError } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
+    if (isAuthenticated && user) {
+      // Redirect to appropriate dashboard based on user role
+      if (user.role === 'doctor') {
+        navigate('/doctor-dashboard');
+      } else if (user.role === 'patient') {
+        navigate('/patient-dashboard');
+      } else {
+        navigate('/');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   // Clear errors when component mounts
   useEffect(() => {
@@ -36,11 +43,10 @@ const LoginPage = () => {
     setLoading(true);
 
     const result = await login(formData);
-    
-    if (result.success) {
-      navigate('/');
-    }
-    
+
+    // Don't manually navigate here - let the useEffect handle it
+    // This prevents double navigation
+
     setLoading(false);
   };
 

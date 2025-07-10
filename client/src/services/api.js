@@ -2,11 +2,15 @@ import axios from 'axios';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: 'http://localhost:5000/api', // Force localhost for testing
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Debug: Log the API URL being used
+console.log('API Base URL (forced):', 'http://localhost:5000/api');
+console.log('Environment API URL:', process.env.REACT_APP_API_URL);
 
 // Request interceptor to add auth token
 api.interceptors.request.use(

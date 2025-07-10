@@ -20,15 +20,22 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   
-  const { register, isAuthenticated, error, clearError } = useAuth();
+  const { register, isAuthenticated, user, error, clearError } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
+    if (isAuthenticated && user) {
+      // Redirect to appropriate dashboard based on user role
+      if (user.role === 'doctor') {
+        navigate('/doctor-dashboard');
+      } else if (user.role === 'patient') {
+        navigate('/patient-dashboard');
+      } else {
+        navigate('/');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   // Clear errors when component mounts
   useEffect(() => {
@@ -121,12 +128,11 @@ const RegisterPage = () => {
       submitData.consultationFee = parseFloat(formData.consultationFee);
     }
 
-    const result = await register(submitData);
-    
-    if (result.success) {
-      navigate('/');
-    }
-    
+    await register(submitData);
+
+    // Don't manually navigate here - let the useEffect handle it
+    // This prevents double navigation
+
     setLoading(false);
   };
 

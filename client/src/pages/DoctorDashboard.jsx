@@ -44,8 +44,12 @@ const DoctorDashboard = () => {
           : apt
       ));
     } catch (error) {
-      console.log(error.response?.data?.message || 'Failed to update appointment status');
-      
+      const errorMessage = error.response?.data?.message || 'Failed to update appointment status';
+      console.error('Error updating appointment status:', errorMessage);
+      setError(errorMessage);
+
+      // Clear error after 5 seconds
+      setTimeout(() => setError(''), 5000);
     } finally {
       setUpdatingStatus(null);
     }

@@ -33,6 +33,7 @@ const PatientDashboard = () => {
 
     try {
       setCancellingId(appointmentId);
+      console.log('Cancelling appointment:', appointmentId);
       await appointmentAPI.cancelAppointment(appointmentId, 'Cancelled by patient');
       
       // Update the appointment in the local state

@@ -23,10 +23,29 @@ const app = express();
 const server = http.createServer(app);
 
 // Middleware
+const allowedOrigins = ['http://localhost:3000', `http://localhost:3001`];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
+    origin: (origin , callback) => {
+        // Allow If no origin paresent like mobile or postman
+        if(!origin) return callback(null , true);
+        if(origin){
+            if(allowedOrigins.includes(origin)){
+                return callback(null , true);
+            }else {
+                return callback(new Error("Not allowed by CORS"));
+            }
+        }
+    }
+    , credentials: true , 
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS", // Include OPTIONS
+    allowedHeaders: "Content-Type,Authorization,Accept", // Ensure you include all necessary headers
+    // allowedHeaders : (req, callback) => {
+    // callback(null, req.headers['access-control-request-headers'])
+    // } , 
+    optionsSuccessStatus: 204, // For legacy browsers
+})), 
+
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

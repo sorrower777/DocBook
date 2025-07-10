@@ -121,18 +121,46 @@ export const AuthProvider = ({ children }) => {
           type: AUTH_ACTIONS.LOAD_USER_SUCCESS,
           payload: { user, token },
         });
+
+        // Verify with server in background without changing loading state
+        try {
+          const response = await authAPI.getProfile();
+          const freshUser = response.data.data.user;
+
+          // Only update if user data has changed
+          if (JSON.stringify(user) !== JSON.stringify(freshUser)) {
+            localStorage.setItem('user', JSON.stringify(freshUser));
+            dispatch({
+              type: AUTH_ACTIONS.LOAD_USER_SUCCESS,
+              payload: { user: freshUser, token },
+            });
+          }
+        } catch (error) {
+          console.error('Background user verification failed:', error);
+          // Only clear auth if it's a 401 (unauthorized) error
+          if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            dispatch({
+              type: AUTH_ACTIONS.LOAD_USER_FAILURE,
+              payload: 'Session expired. Please login again.',
+            });
+          }
+        }
+        return;
       } catch (error) {
         console.error('Error parsing saved user:', error);
+        // Clear invalid saved data
+        localStorage.removeItem('user');
       }
     }
 
-    // Then verify with server in background
+    // No saved user data, verify with server
     try {
       dispatch({ type: AUTH_ACTIONS.LOAD_USER_START });
       const response = await authAPI.getProfile();
 
       const user = response.data.data.user;
-      // Update localStorage with fresh user data
       localStorage.setItem('user', JSON.stringify(user));
 
       dispatch({
@@ -141,16 +169,12 @@ export const AuthProvider = ({ children }) => {
       });
     } catch (error) {
       console.error('Failed to verify user with server:', error);
-      // Only clear auth if it's a 401 (unauthorized) error
-      if (error.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        dispatch({
-          type: AUTH_ACTIONS.LOAD_USER_FAILURE,
-          payload: 'Session expired. Please login again.',
-        });
-      }
-      // For other errors (network issues), keep the user logged in with cached data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      dispatch({
+        type: AUTH_ACTIONS.LOAD_USER_FAILURE,
+        payload: 'Session expired. Please login again.',
+      });
     }
   };
 
