@@ -23,11 +23,15 @@ const app = express();
 const server = http.createServer(app);
 
 // Middleware
-const allowedOrigins = ['http://localhost:3000', `http://localhost:3001`];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://doc-book-app.vercel.app'
+];
 
 app.use(cors({
     origin: (origin , callback) => {
-        // Allow If no origin paresent like mobile or postman
+        // Allow if no origin present like mobile or postman
         if(!origin) return callback(null , true);
         if(origin){
             if(allowedOrigins.includes(origin)){
