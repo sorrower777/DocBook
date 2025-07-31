@@ -36,8 +36,10 @@ export const SocketProvider = ({ children }) => {
         transports: ['websocket', 'polling'],
         forceNew: true,
         reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        timeout: 20000,
+        upgrade: true
       });
 
       newSocket.on('connect', () => {
@@ -106,6 +108,7 @@ export const SocketProvider = ({ children }) => {
 
       // Handle incoming calls
       newSocket.on('incoming_call', (callData) => {
+        console.log('📞 Incoming call received:', callData);
         setIncomingCall(callData);
         addNotification({
           type: 'call',
@@ -114,6 +117,12 @@ export const SocketProvider = ({ children }) => {
           timestamp: new Date(),
           data: callData
         });
+      });
+
+      // Handle call initiated (for outgoing calls)
+      newSocket.on('call_initiated', (callData) => {
+        console.log('📞 Call initiated successfully:', callData);
+        setActiveCall(callData);
       });
 
       // Handle call events
@@ -172,6 +181,30 @@ export const SocketProvider = ({ children }) => {
           message: 'You have a new response from support',
           timestamp: new Date(),
           data: message
+        });
+      });
+
+      // Handle WebRTC signaling events
+      newSocket.on('webrtc_offer', (data) => {
+        console.log('🔄 Received WebRTC offer:', data);
+      });
+
+      newSocket.on('webrtc_answer', (data) => {
+        console.log('🔄 Received WebRTC answer:', data);
+      });
+
+      newSocket.on('webrtc_ice_candidate', (data) => {
+        console.log('🔄 Received ICE candidate:', data);
+      });
+
+      // Handle connection errors
+      newSocket.on('call_error', (data) => {
+        console.error('❌ Call error:', data);
+        addNotification({
+          type: 'error',
+          title: 'Call Error',
+          message: data.error || 'An error occurred during the call',
+          timestamp: new Date()
         });
       });
 

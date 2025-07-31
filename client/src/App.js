@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import NotificationCenter from './components/NotificationCenter';
 import CommunicationTest from './components/CommunicationTest';
 import WebRTCDebugger from './components/WebRTCDebugger';
+import SimpleWebRTCTest from './components/SimpleWebRTCTest';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Pages
@@ -48,6 +49,7 @@ function AppContent() {
             <Route path="/doctor/:id" element={<DoctorProfilePage />} />
             <Route path="/test-communication" element={<CommunicationTest />} />
             <Route path="/test-webrtc" element={<WebRTCDebugger />} />
+            <Route path="/test-simple" element={<SimpleWebRTCTest />} />
 
             {/* Protected Routes */}
             <Route 

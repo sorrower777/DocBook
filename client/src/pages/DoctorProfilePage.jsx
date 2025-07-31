@@ -4,6 +4,7 @@ import { FiMessageCircle, FiVideo, FiPhone } from 'react-icons/fi';
 import { doctorAPI } from '../services/api';
 import BookingForm from '../components/BookingForm';
 import CommunicationDashboard from '../components/CommunicationDashboard';
+import VideoCall from '../components/VideoCall';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 
@@ -15,13 +16,31 @@ const DoctorProfilePage = () => {
   const [error, setError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [showCommunications, setShowCommunications] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [currentCall, setCurrentCall] = useState(null);
 
   const { user, isAuthenticated } = useAuth();
-  const { initiateCall, setActiveCall } = useSocket();
+  const { initiateCall, setActiveCall, activeCall, socket } = useSocket();
 
   useEffect(() => {
     fetchDoctorProfile();
-  }, [id]);
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleCallInitiated = (callData) => {
+      console.log('📞 Call initiated, updating UI:', callData);
+      setCurrentCall(callData);
+      setShowVideoCall(true);
+    };
+
+    socket.on('call_initiated', handleCallInitiated);
+
+    return () => {
+      socket.off('call_initiated', handleCallInitiated);
+    };
+  }, [socket]);
 
   const fetchDoctorProfile = async () => {
     try {
@@ -51,25 +70,9 @@ const DoctorProfilePage = () => {
       return;
     }
     
-    // Create a call data object for outgoing calls
-    const callData = {
-      callId: `call_${Date.now()}`,
-      roomId: `call_${Date.now()}`,
-      receiver: {
-        id: doctor.user._id,
-        name: doctor.user.name,
-        role: doctor.user.role
-      },
-      caller: {
-        id: user._id,
-        name: user.name,
-        role: user.role
-      },
-      callType
-    };
+    console.log('🚀 Initiating call with doctor:', doctor.user._id, 'type:', callType);
     
-    // Set active call and initiate
-    setActiveCall(callData);
+    // Just initiate the call, let the server handle room creation
     initiateCall(doctor.user._id, callType);
   };
 
@@ -280,6 +283,19 @@ const DoctorProfilePage = () => {
         onClose={() => setShowCommunications(false)}
         initialReceiver={doctor?.user}
       />
+
+      {/* Video Call Interface */}
+      {(showVideoCall || activeCall) && currentCall && (
+        <VideoCall
+          callData={currentCall}
+          onEndCall={() => {
+            setShowVideoCall(false);
+            setCurrentCall(null);
+            setActiveCall(null);
+          }}
+          isIncoming={false}
+        />
+      )}
     </div>
   );
 };

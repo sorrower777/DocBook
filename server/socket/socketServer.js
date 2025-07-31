@@ -177,10 +177,14 @@ const initializeSocket = (server) => {
 
         // Join call room
         socket.join(roomId);
+        console.log(`📞 User ${socket.userName} joined call room: ${roomId}`);
 
         // Notify receiver about incoming call
         const receiverSocket = activeUsers.get(receiverId);
         if (receiverSocket) {
+          // Make receiver join the room too
+          io.sockets.sockets.get(receiverSocket.socketId)?.join(roomId);
+          
           io.to(receiverId).emit('incoming_call', {
             callId,
             roomId,
@@ -188,6 +192,19 @@ const initializeSocket = (server) => {
               id: socket.userId,
               name: socket.userName,
               role: socket.userRole
+            },
+            callType,
+            appointmentId
+          });
+
+          // Also notify the caller with call details
+          socket.emit('call_initiated', {
+            callId,
+            roomId,
+            receiver: {
+              id: receiverId,
+              name: receiverSocket.userName,
+              role: receiverSocket.role
             },
             callType,
             appointmentId
@@ -277,17 +294,20 @@ const initializeSocket = (server) => {
     // Handle WebRTC signaling
     socket.on('webrtc_offer', (data) => {
       const { roomId, offer } = data;
-      socket.to(roomId).emit('webrtc_offer', { offer, senderId: socket.userId });
+      console.log(`📡 WebRTC offer from ${socket.userName} to room ${roomId}`);
+      socket.to(roomId).emit('webrtc_offer', { offer, senderId: socket.id });
     });
 
     socket.on('webrtc_answer', (data) => {
       const { roomId, answer } = data;
-      socket.to(roomId).emit('webrtc_answer', { answer, senderId: socket.userId });
+      console.log(`📡 WebRTC answer from ${socket.userName} to room ${roomId}`);
+      socket.to(roomId).emit('webrtc_answer', { answer, senderId: socket.id });
     });
 
     socket.on('webrtc_ice_candidate', (data) => {
       const { roomId, candidate } = data;
-      socket.to(roomId).emit('webrtc_ice_candidate', { candidate, senderId: socket.userId });
+      console.log(`📡 ICE candidate from ${socket.userName} to room ${roomId}`);
+      socket.to(roomId).emit('webrtc_ice_candidate', { candidate, senderId: socket.id });
     });
 
     // Handle helpline chat

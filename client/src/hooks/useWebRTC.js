@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSocket } from '../context/SocketContext';
 
 const useWebRTC = (roomId, isInitiator = false) => {
@@ -18,7 +18,7 @@ const useWebRTC = (roomId, isInitiator = false) => {
   const { socket, sendWebRTCOffer, sendWebRTCAnswer, sendICECandidate } = useSocket();
 
   // ICE servers configuration
-  const iceServers = {
+  const iceServers = useMemo(() => ({
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
@@ -27,7 +27,7 @@ const useWebRTC = (roomId, isInitiator = false) => {
       { urls: 'stun:stun4.l.google.com:19302' }
     ],
     iceCandidatePoolSize: 10
-  };
+  }), []);
 
   // Initialize peer connection
   const initializePeerConnection = useCallback(() => {
@@ -338,19 +338,24 @@ const useWebRTC = (roomId, isInitiator = false) => {
   useEffect(() => {
     if (!socket || !roomId) return;
 
+    console.log('🔌 Setting up WebRTC socket listeners for room:', roomId);
+
     const handleWebRTCOffer = (data) => {
+      console.log('📥 Received WebRTC offer from:', data.senderId, data);
       if (data.senderId !== socket.id) {
         handleOffer(data.offer);
       }
     };
 
     const handleWebRTCAnswer = (data) => {
+      console.log('📥 Received WebRTC answer from:', data.senderId, data);
       if (data.senderId !== socket.id) {
         handleAnswer(data.answer);
       }
     };
 
     const handleWebRTCICE = (data) => {
+      console.log('📥 Received ICE candidate from:', data.senderId, data);
       if (data.senderId !== socket.id) {
         handleICECandidate(data.candidate);
       }
@@ -361,6 +366,7 @@ const useWebRTC = (roomId, isInitiator = false) => {
     socket.on('webrtc_ice_candidate', handleWebRTCICE);
 
     return () => {
+      console.log('🔌 Cleaning up WebRTC socket listeners for room:', roomId);
       socket.off('webrtc_offer', handleWebRTCOffer);
       socket.off('webrtc_answer', handleWebRTCAnswer);
       socket.off('webrtc_ice_candidate', handleWebRTCICE);
