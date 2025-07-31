@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPhone, FiPhoneOff, FiMessageCircle, FiX, FiBell, FiAlertCircle } from 'react-icons/fi';
 import { useSocket } from '../context/SocketContext';
 import VideoCall from './VideoCall';
@@ -9,6 +9,7 @@ const NotificationCenter = () => {
   
   const {
     incomingCall,
+    activeCall,
     notifications,
     answerCall,
     rejectCall,
@@ -16,11 +17,20 @@ const NotificationCenter = () => {
     clearAllNotifications
   } = useSocket();
 
+  // Handle active call changes
+  useEffect(() => {
+    if (activeCall && !showVideoCall) {
+      setCurrentCall(activeCall);
+      setShowVideoCall(true);
+    } else if (!activeCall && showVideoCall) {
+      setShowVideoCall(false);
+      setCurrentCall(null);
+    }
+  }, [activeCall, showVideoCall]);
+
   const handleAnswerCall = () => {
     if (incomingCall) {
       answerCall(incomingCall.callId, incomingCall.roomId);
-      setCurrentCall(incomingCall);
-      setShowVideoCall(true);
     }
   };
 
@@ -104,11 +114,11 @@ const NotificationCenter = () => {
       )}
 
       {/* Video Call Interface */}
-      {showVideoCall && currentCall && (
+      {showVideoCall && (currentCall || incomingCall) && (
         <VideoCall
-          callData={currentCall}
+          callData={currentCall || incomingCall}
           onEndCall={handleEndCall}
-          isIncoming={true}
+          isIncoming={!!incomingCall && !currentCall}
         />
       )}
 

@@ -17,7 +17,7 @@ const DoctorProfilePage = () => {
   const [showCommunications, setShowCommunications] = useState(false);
 
   const { user, isAuthenticated } = useAuth();
-  const { initiateCall } = useSocket();
+  const { initiateCall, setActiveCall } = useSocket();
 
   useEffect(() => {
     fetchDoctorProfile();
@@ -50,6 +50,26 @@ const DoctorProfilePage = () => {
       navigate('/login');
       return;
     }
+    
+    // Create a call data object for outgoing calls
+    const callData = {
+      callId: `call_${Date.now()}`,
+      roomId: `call_${Date.now()}`,
+      receiver: {
+        id: doctor.user._id,
+        name: doctor.user.name,
+        role: doctor.user.role
+      },
+      caller: {
+        id: user._id,
+        name: user.name,
+        role: user.role
+      },
+      callType
+    };
+    
+    // Set active call and initiate
+    setActiveCall(callData);
     initiateCall(doctor.user._id, callType);
   };
 
