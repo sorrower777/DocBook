@@ -1,15 +1,22 @@
 import axios from 'axios';
 
 // Create axios instance
+const API_URL = process.env.REACT_APP_API_URL || 
+               (process.env.NODE_ENV === 'production' 
+                 ? 'https://docbook-87tn.onrender.com/api' 
+                 : 'http://localhost:5000/api');
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 second timeout
 });
 
 // Debug: Log the API URL being used
-console.log('API Base URL:', process.env.REACT_APP_API_URL);
+console.log('API Base URL:', API_URL);
+console.log('Environment:', process.env.NODE_ENV);
 console.log('Environment API URL:', process.env.REACT_APP_API_URL);
 
 // Request interceptor to add auth token
@@ -32,12 +39,26 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      message: error.message,
+      data: error.response?.data
+    });
+
     if (error.response?.status === 401) {
       // Token expired or invalid
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
+    
+    // Handle CORS errors
+    if (error.message.includes('CORS') || error.code === 'ERR_NETWORK') {
+      console.error('CORS or Network Error - Check server configuration and network connectivity');
+    }
+    
     return Promise.reject(error);
   }
 );

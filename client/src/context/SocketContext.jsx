@@ -47,7 +47,14 @@ export const SocketProvider = ({ children }) => {
       console.log('Initializing socket connection for user:', user.name);
 
       // Initialize socket connection
-      const newSocket = io(process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000', {
+      const socketURL = process.env.REACT_APP_API_URL?.replace('/api', '') || 
+                       (process.env.NODE_ENV === 'production' 
+                         ? 'https://docbook-87tn.onrender.com' 
+                         : 'http://localhost:5000');
+      
+      console.log('Socket connecting to:', socketURL);
+      
+      const newSocket = io(socketURL, {
         auth: {
           token: token
         },

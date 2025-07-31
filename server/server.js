@@ -26,29 +26,41 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://doc-book-app.vercel.app'
+  'https://doc-book-app.vercel.app',
+  'https://doc-book-gbkxde76y-ritoms-projects-ed08d00b.vercel.app',
+  /https:\/\/.*\.vercel\.app$/  // Allow all Vercel app domains
 ];
 
 app.use(cors({
-    origin: (origin , callback) => {
+    origin: (origin, callback) => {
         // Allow if no origin present like mobile or postman
-        if(!origin) return callback(null , true);
-        if(origin){
-            if(allowedOrigins.includes(origin)){
-                return callback(null , true);
-            }else {
+        if (!origin) return callback(null, true);
+        
+        if (origin) {
+            // Check if origin is in allowed list or matches Vercel pattern
+            const isAllowed = allowedOrigins.some(allowedOrigin => {
+                if (typeof allowedOrigin === 'string') {
+                    return allowedOrigin === origin;
+                } else if (allowedOrigin instanceof RegExp) {
+                    return allowedOrigin.test(origin);
+                }
+                return false;
+            });
+            
+            if (isAllowed) {
+                return callback(null, true);
+            } else {
+                console.error(`CORS Error: Origin ${origin} not allowed`);
                 return callback(new Error("Not allowed by CORS"));
             }
         }
-    }
-    , credentials: true , 
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS", // Include OPTIONS
-    allowedHeaders: "Content-Type,Authorization,Accept", // Ensure you include all necessary headers
-    // allowedHeaders : (req, callback) => {
-    // callback(null, req.headers['access-control-request-headers'])
-    // } , 
+    },
+    credentials: true,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type,Authorization,Accept,X-Requested-With",
     optionsSuccessStatus: 204, // For legacy browsers
-})), 
+    preflightContinue: false,
+})); 
 
 
 app.use(express.json({ limit: '10mb' }));
