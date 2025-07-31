@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
@@ -22,6 +22,24 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   
   const { user, token, isAuthenticated, isLoading } = useAuth();
+
+  // Define removeNotification first since addNotification depends on it
+  const removeNotification = useCallback((id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  // Define addNotification with useCallback to avoid dependency issues
+  const addNotification = useCallback((notification) => {
+    const id = Date.now().toString();
+    const newNotification = { ...notification, id };
+    
+    setNotifications(prev => [newNotification, ...prev.slice(0, 9)]); // Keep only 10 notifications
+    
+    // Auto-remove notification after 5 seconds
+    setTimeout(() => {
+      removeNotification(id);
+    }, 5000);
+  }, [removeNotification]);
 
   useEffect(() => {
     // Only connect when authentication is complete and we have user data
@@ -216,27 +234,11 @@ export const SocketProvider = ({ children }) => {
         setIsConnected(false);
       };
     }
-  }, [isAuthenticated, token, user, isLoading]);
+  }, [isAuthenticated, token, user, isLoading, addNotification]);
 
-  const addNotification = (notification) => {
-    const id = Date.now().toString();
-    const newNotification = { ...notification, id };
-    
-    setNotifications(prev => [newNotification, ...prev.slice(0, 9)]); // Keep only 10 notifications
-    
-    // Auto-remove notification after 5 seconds
-    setTimeout(() => {
-      removeNotification(id);
-    }, 5000);
-  };
-
-  const removeNotification = (id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const clearAllNotifications = () => {
+  const clearAllNotifications = useCallback(() => {
     setNotifications([]);
-  };
+  }, []);
 
   // Socket utility functions
   const joinChat = (receiverId) => {
